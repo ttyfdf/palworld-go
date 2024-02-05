@@ -29,6 +29,7 @@ import (
 	"github.com/hoshinonyaruko/palworld-go/sys"
 	"github.com/hoshinonyaruko/palworld-go/tool"
 	"github.com/hoshinonyaruko/palworld-go/webui"
+	"github.com/hoshinonyaruko/palworld-go/config"
 )
 
 var version string
