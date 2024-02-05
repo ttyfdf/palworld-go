@@ -100,7 +100,7 @@ func KillProcess() error {
     }
 
     // 构造PalServer的完整路径
-    executablePath := filepath.Join(cwd, "PalServer-Win64-Test-Cmd.exe")
+    executablePath := filepath.Join(cwd, "PalServer.exe")
 
     // 获取PID
     pid, err := GetPIDByPath(executablePath)
