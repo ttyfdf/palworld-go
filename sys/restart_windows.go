@@ -4,6 +4,7 @@
 package sys
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,7 +15,24 @@ import (
 	"unsafe"
 
 	"github.com/hoshinonyaruko/palworld-go/config"
+	 "github.com/shirou/gopsutil/process"
 )
+
+// GetPIDByPath 返回与给定路径匹配的进程的PID
+func GetPIDByPath(path string) (int32, error) {
+    processes, err := process.Processes()
+    if err != nil {
+        return 0, err
+    }
+
+    for _, p := range processes {
+        exePath, err := p.Exe()
+        if err == nil && exePath == path {
+            return p.Pid, nil
+        }
+    }
+    return 0, fmt.Errorf("no process found with path %s", path)
+}
 
 // WindowsRestarter implements the Restarter interface for Windows systems.
 type WindowsRestarter struct{}
@@ -75,18 +93,34 @@ func setConsoleTitleWindows(title string) error {
 }
 
 func KillProcess() error {
-	var cmd *exec.Cmd
+    // 获取当前工作目录
+    cwd, err := os.Getwd()
+    if err != nil {
+        return err
+    }
 
-	if runtime.GOOS == "windows" {
-		// Windows: 直接指定要结束的进程名称
-		cmd = exec.Command("taskkill", "/IM", "PalServer-Win64-Test-Cmd.exe", "/F")
-	} else {
-		// 非Windows: 使用pkill命令和进程名称
-		cmd = exec.Command("pkill", "-f", "PalServer-Linux-Test")
-	}
+    // 构造PalServer的完整路径
+    executablePath := filepath.Join(cwd, "Pal", "Binaries", "Win64", "PalServer-Win64-Test-Cmd.exe")
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	return cmd.Run()
+    // 获取PID
+    pid, err := GetPIDByPath(executablePath)
+    if err != nil {
+        return err
+    }
+	    // 打印PID
+    fmt.Printf("获取到的PID: %d\n", pid)
+
+    var cmd *exec.Cmd
+    if runtime.GOOS == "windows" {
+        // Windows: 使用PID结束进程
+        cmd = exec.Command("taskkill", "/PID", strconv.Itoa(int(pid)), "/F")
+    } else {
+        // 非Windows: 使用PID结束进程
+        cmd = exec.Command("kill", "-9", strconv.Itoa(int(pid)))
+    }
+
+    cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+    return cmd.Run()
 }
 
 // RunViaBatch 函数接受配置，程序路径和参数数组
