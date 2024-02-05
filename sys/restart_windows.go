@@ -107,6 +107,8 @@ func KillProcess() error {
     if err != nil {
         return err
     }
+	    // 打印PID
+    fmt.Printf("获取到的PID: %d\n", pid)
 
     var cmd *exec.Cmd
     if runtime.GOOS == "windows" {
